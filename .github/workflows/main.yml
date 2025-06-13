@@ -1,15 +1,15 @@
 name: CI/CD Pipeline
-
+ 
 on:
   push:
     branches:
       - '**'
-
+ 
 jobs:
   lint:
     if: github.ref != 'refs/heads/main'
     name: Lint (ESLint)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -17,11 +17,11 @@ jobs:
           node-version: '18'
       - run: npm install
       - run: npm run lint
-
+ 
   unit_tests:
     if: github.ref != 'refs/heads/main'
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -29,11 +29,11 @@ jobs:
           node-version: '18'
       - run: npm install
       - run: npm test
-
+ 
   build:
     if: always()
     name: Build & Archive Docker Image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs:
       - lint
       - unit_tests
@@ -46,11 +46,11 @@ jobs:
         with:
           name: docker-image
           path: image.tar
-
+ 
   deploy_staging:
     if: always() && github.ref == 'refs/heads/main'
     name: Deploy to Staging
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     environment:
       name: staging
@@ -59,11 +59,11 @@ jobs:
         with:
           name: docker-image
       - run: echo ">>> Symulacja obraz wdrożony na staging."
-
+ 
   deploy_production:
     if: always() && github.ref == 'refs/heads/main'
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy_staging
     environment:
       name: production
@@ -73,10 +73,10 @@ jobs:
           name: docker-image
       - run: docker load -i image.tar
       - run: docker push jakfah/ci-cd-kolo:latest
-
+ 
   final_report:
     name: Final Report
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs:
       - lint
       - unit_tests
